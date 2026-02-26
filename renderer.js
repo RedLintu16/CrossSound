@@ -108,7 +108,7 @@ window.electronAPI.onMediaAction(({ action }) => {
       js = `document.querySelector('.playbackSoundBadge__like, .playbackSoundBadge__like.sc-button-like')?.click();`;
       break;
   }
-  webview.executeJavaScript(js).catch(console.error);
+  webview.executeJavaScript(js);
 });
 
 // Poll playback state every second and send to main if changed
@@ -149,53 +149,33 @@ function pollPlaybackState() {
 
 setInterval(pollPlaybackState, 1000);
 
-// Context menu handling
+// Context menu handling (assuming correct ipc in preload)
 webview.addEventListener('ipc-message', event => {
   if (event.channel === 'show-native-context-menu' && event.args[0]) {
     const { x, y } = event.args[0];
     window.electronAPI.showContextMenu(x, y);
   }
 });
-
 webview.addEventListener('contextmenu', e => {
   e.preventDefault();
   window.electronAPI.showContextMenu(e.clientX, e.clientY);
 });
-
 window.addEventListener('contextmenu', e => {
   e.preventDefault();
   window.electronAPI.showContextMenu(e.clientX, e.clientY);
 });
 
-webview.addEventListener('dom-ready', () => {
-  webview.insertCSS(`
-    /* Hide scrollbar */
+webview.addEventListener ('dom-ready',() => {
+    webview.insertCSS(`
+    /* For WebKit browsers (Chrome, Safari, Opera) */
     ::-webkit-scrollbar {
       display: none;
     }
+
+    /* For IE, Edge */
     -ms-overflow-style: none;
+
+    /* For Firefox */
     scrollbar-width: none;
   `);
-});
-
-function removeCustomTheme() {
-  const script = `
-    (function() {
-      const style = document.getElementById('custom-theme-style');
-      if (style) {
-        style.remove();
-      }
-    })();
-  `;
-  webview.executeJavaScript(script).catch(console.error);
-}
-
-window.electronAPI.on('remove-theme', () => {
-  const script = `
-    const style = document.getElementById('custom-theme-style');
-    if (style) style.remove();
-  `;
-  const webview = document.getElementById('soundcloud');
-  if (webview) webview.executeJavaScript(script).catch(console.error);
-});
-
+})

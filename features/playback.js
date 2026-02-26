@@ -36,33 +36,24 @@ function updateTaskbarButtons(mainWindow, state = {}) {
   ]);
 }
 
-let mainWindowRef;
-
 function registerMediaKeys(mainWindow) {
-  mainWindowRef = mainWindow;
   globalShortcut.register('MediaPlayPause', () => {
-    mainWindowRef.webContents.send('crosssound-media-action', { action: 'playpause' });
+    if (mainWindow) {
+      mainWindow.webContents.send('crosssound-media-action', { action: 'playpause' });
+    }
   });
+
   globalShortcut.register('MediaNextTrack', () => {
-    mainWindowRef.webContents.send('crosssound-media-action', { action: 'next' });
+    if (mainWindow) {
+      mainWindow.webContents.send('crosssound-media-action', { action: 'next' });
+    }
   });
+
   globalShortcut.register('MediaPreviousTrack', () => {
-    mainWindowRef.webContents.send('crosssound-media-action', { action: 'previous' });
+    if (mainWindow) {
+      mainWindow.webContents.send('crosssound-media-action', { action: 'previous' });
+    }
   });
-}
-
-function unregisterMediaKeys() {
-  globalShortcut.unregisterAll();
-}
-
-module.exports = {
-  registerMediaKeys,
-  unregisterMediaKeys,
-};
-
-
-function unregisterMediaKeys() {
-  globalShortcut.unregisterAll();
 }
 
 function unregisterMediaKeys() {
