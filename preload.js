@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onOpenSettings: (cb) => ipcRenderer.on('open-settings', () => cb()),
   onClearTheme:   (cb) => ipcRenderer.on('clear-theme', () => cb()),
   getBaseCss: () => ipcRenderer.invoke('read-base-css'),
+  lastfmGetAuthToken: (apiKey, apiSecret) => ipcRenderer.invoke('lastfm-get-auth-token', { apiKey, apiSecret }),
+  lastfmCompleteAuth: (apiKey, apiSecret, token) => ipcRenderer.invoke('lastfm-complete-auth', { apiKey, apiSecret, token }),
   on: (channel, callback) => ipcRenderer.on(channel, (event, data) => callback(data)),
 });
 
