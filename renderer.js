@@ -6,6 +6,8 @@ let lastPlayState = null;
 let lastLikeState = null;
 let lastTrackTitle = '';
 let lastTrackArtist = '';
+let lastPosition = 0;
+let lastDurationStr = '';
 
 // Helper to show small theme loaded notification popup
 function showThemeNotification(themeName) {
@@ -157,17 +159,48 @@ function pollPlaybackState() {
 
       const artist = document.querySelector('.playbackSoundBadge__lightLink')?.textContent?.trim() || '';
 
-      return { isPlaying, isLiked, title, artist };
+      // Artwork — media session is most reliable on SoundCloud
+      let artwork = '';
+      const ms = navigator.mediaSession?.metadata;
+      if (ms?.artwork?.length) {
+        artwork = ms.artwork[ms.artwork.length - 1].src;
+      }
+      if (!artwork) {
+        const img = document.querySelector('.playbackSoundBadge__avatar .image__full');
+        if (img) {
+          const bg = window.getComputedStyle(img).backgroundImage;
+          const match = bg.match(/url\\(["']?([^"')]+)["']?\\)/);
+          if (match) artwork = match[1];
+        }
+      }
+
+      // Position from audio element (for seek detection)
+      const audio = document.querySelector('audio');
+      const position = audio ? Math.floor(audio.currentTime) : 0;
+
+      // Time strings from the UI (reliable even before audio.duration loads)
+      const currentTimeStr = document.querySelector('.playbackTimeline__timePassed span[aria-hidden="true"]')?.textContent?.trim() || '';
+      const durationStr = document.querySelector('.playbackTimeline__duration span[aria-hidden="true"]')?.textContent?.trim() || '';
+
+      return { isPlaying, isLiked, title, artist, artwork, position, currentTimeStr, durationStr };
     })();
   `).then(state => {
+    if (!state) return;
+
+    // Detect a seek: position jumped more than 1s ahead of where we expect it
+    const seeked = state.isPlaying && Math.abs(state.position - (lastPosition + 1)) > 5;
+    // When a new track starts, reset so durationBecameAvailable can fire again
+    if (state.title !== lastTrackTitle) lastDurationStr = '';
+    // Resend once the duration string loads so Discord gets the correct countdown
+    const durationBecameAvailable = !!state.durationStr && !lastDurationStr;
+
     if (
-      state &&
-      (
-        state.isPlaying !== lastPlayState ||
-        state.isLiked !== lastLikeState ||
-        state.title !== lastTrackTitle ||
-        state.artist !== lastTrackArtist
-      )
+      state.isPlaying !== lastPlayState ||
+      state.isLiked !== lastLikeState ||
+      state.title !== lastTrackTitle ||
+      state.artist !== lastTrackArtist ||
+      seeked ||
+      durationBecameAvailable
     ) {
       window.electronAPI.sendPlaybackState(state);
       lastPlayState = state.isPlaying;
@@ -175,6 +208,9 @@ function pollPlaybackState() {
       lastTrackTitle = state.title;
       lastTrackArtist = state.artist;
     }
+
+    lastPosition = state.position;
+    lastDurationStr = state.durationStr;
   }).catch(console.error);
 }
 
@@ -410,7 +446,7 @@ webview.addEventListener('dom-ready', async () => {
     })();
   `).catch(console.error);
 
-  const baseCss = await window.electronAPI.getBaseCss();
+const baseCss = await window.electronAPI.getBaseCss();
   if (baseCss) {
     const escaped = baseCss.replace(/\\/g, '\\\\').replace(/`/g, '\\`');
     webview.executeJavaScript(`

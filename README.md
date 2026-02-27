@@ -16,3 +16,4 @@ I just wanted something that works. I had been using a different one, but it was
 [![](screenshots/MainProgram.png)]()
 [![](screenshots/TaskBarView.png)]()
 [![](screenshots/SystemTrayArea.png)]()
+[![](screenshots/Settings.png)]()
