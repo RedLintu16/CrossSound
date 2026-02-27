@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveSettings: (s) => ipcRenderer.invoke('save-settings', s),
   onOpenSettings: (cb) => ipcRenderer.on('open-settings', () => cb()),
   onClearTheme:   (cb) => ipcRenderer.on('clear-theme', () => cb()),
+  getBaseCss: () => ipcRenderer.invoke('read-base-css'),
   on: (channel, callback) => ipcRenderer.on(channel, (event, data) => callback(data)),
 });
 

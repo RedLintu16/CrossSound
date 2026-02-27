@@ -6,7 +6,7 @@
 </head>
 <body>
 
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles/main/styles.css">
 <div id="theme-notification">Theme Loaded!</div>
 
 <div id="settings-overlay">
@@ -50,6 +50,38 @@
           <input type="text" id="hotkey-like" readonly placeholder="Click to set…">
           <button class="hotkey-clear" data-target="hotkey-like">×</button>
         </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>Discord Rich Presence</h3>
+      <label class="toggle-row">
+        <input type="checkbox" id="setting-discord-rpc">
+        <span>Enable Discord Rich Presence</span>
+      </label>
+    </div>
+
+    <div class="settings-section">
+      <h3>Last.FM Scrobbling</h3>
+      <label class="toggle-row">
+        <input type="checkbox" id="setting-lastfm-enabled">
+        <span>Enable Last.FM Scrobbling</span>
+      </label>
+      <div class="hotkey-row">
+        <span>API Key</span>
+        <input type="text" id="setting-lastfm-api-key" class="text-input" placeholder="Your Last.FM API Key">
+      </div>
+      <div class="hotkey-row">
+        <span>API Secret</span>
+        <input type="text" id="setting-lastfm-api-secret" class="text-input" placeholder="Your Last.FM API Secret">
+      </div>
+      <div id="lastfm-auth-actions">
+        <button id="lastfm-connect-btn" class="service-btn" type="button">Connect to Last.FM</button>
+      </div>
+      <div id="lastfm-auth-status"></div>
+      <div id="lastfm-complete-auth" style="display:none;">
+        <p class="settings-hint">Authorize CrossSound on Last.FM in your browser, then click Complete Login.</p>
+        <button id="lastfm-complete-btn" class="service-btn" type="button">Complete Login</button>
       </div>
     </div>
 

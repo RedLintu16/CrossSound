@@ -60,7 +60,6 @@ function injectCss(css) {
   webview.executeJavaScript(script).catch(console.error);
 }
 
-// Setup MutationObserver to keep CSS applied if SoundCloud modifies DOM.
 // Stores the observer at window.__csObserver so it can be disconnected later.
 function setupMutationObserver() {
   if (!themeCss) return; // nothing to keep in place
@@ -266,6 +265,7 @@ function setupHotkeyInput(input) {
 
 function openSettingsPanel(settings) {
   pendingHotkeys = { ...settings.hotkeys };
+  currentSettings = settings;
 
   document.getElementById('setting-notifications').checked = settings.notificationsEnabled;
 
@@ -274,12 +274,77 @@ function openSettingsPanel(settings) {
     if (input) input.value = key || '';
   }
 
+  // Discord RPC
+  document.getElementById('setting-discord-rpc').checked = settings.discordRpc?.enabled || false;
+
+  // Last.FM
+  document.getElementById('setting-lastfm-enabled').checked = settings.lastfm?.enabled || false;
+  document.getElementById('setting-lastfm-api-key').value = settings.lastfm?.apiKey || '';
+  document.getElementById('setting-lastfm-api-secret').value = settings.lastfm?.apiSecret || '';
+  updateLastFMAuthUI(settings);
+
   document.getElementById('settings-overlay').classList.add('open');
   document.getElementById('settings-panel').focus();
 }
 
+let lastfmPendingToken = null;
+let currentSettings = {};
+
+function updateLastFMAuthUI(settings) {
+  const isConnected = !!settings.lastfm?.sessionKey;
+  const statusEl = document.getElementById('lastfm-auth-status');
+  const actionsEl = document.getElementById('lastfm-auth-actions');
+  const completeEl = document.getElementById('lastfm-complete-auth');
+
+  if (isConnected) {
+    statusEl.textContent = `Connected as ${settings.lastfm.username || 'unknown'}`;
+    actionsEl.innerHTML = '<button id="lastfm-disconnect-btn" class="service-btn connected" type="button">Disconnect</button>';
+    completeEl.style.display = 'none';
+    document.getElementById('lastfm-disconnect-btn').addEventListener('click', async () => {
+      await window.electronAPI.saveSettings({ lastfm: { sessionKey: '', username: '' } });
+      currentSettings = await window.electronAPI.getSettings();
+      updateLastFMAuthUI(currentSettings);
+    });
+  } else {
+    statusEl.textContent = '';
+    actionsEl.innerHTML = '<button id="lastfm-connect-btn" class="service-btn" type="button">Connect to Last.FM</button>';
+    document.getElementById('lastfm-connect-btn').addEventListener('click', handleLastFMConnect);
+  }
+}
+
+async function handleLastFMConnect() {
+  const apiKey    = document.getElementById('setting-lastfm-api-key').value.trim();
+  const apiSecret = document.getElementById('setting-lastfm-api-secret').value.trim();
+  if (!apiKey || !apiSecret) {
+    alert('Please enter your Last.FM API Key and Secret first.');
+    return;
+  }
+  const result = await window.electronAPI.lastfmGetAuthToken(apiKey, apiSecret);
+  if (!result.success) {
+    alert(`Failed to get auth token: ${result.error}`);
+    return;
+  }
+  lastfmPendingToken = result.token;
+  document.getElementById('lastfm-complete-auth').style.display = '';
+}
+
+document.getElementById('lastfm-complete-btn').addEventListener('click', async () => {
+  if (!lastfmPendingToken) return;
+  const apiKey    = document.getElementById('setting-lastfm-api-key').value.trim();
+  const apiSecret = document.getElementById('setting-lastfm-api-secret').value.trim();
+  const result = await window.electronAPI.lastfmCompleteAuth(apiKey, apiSecret, lastfmPendingToken);
+  if (!result.success) {
+    alert(`Login failed: ${result.error}\nMake sure you authorized the app in your browser first.`);
+    return;
+  }
+  lastfmPendingToken = null;
+  document.getElementById('lastfm-complete-auth').style.display = 'none';
+  currentSettings = await window.electronAPI.getSettings();
+  updateLastFMAuthUI(currentSettings);
+});
+
 // Wire up hotkey inputs
-document.querySelectorAll('#settings-panel input[type="text"]').forEach(setupHotkeyInput);
+document.querySelectorAll('.hotkey-input-wrap input[type="text"]').forEach(setupHotkeyInput);
 
 // Clear buttons
 document.querySelectorAll('.hotkey-clear').forEach(btn => {
@@ -300,6 +365,12 @@ document.getElementById('settings-save').addEventListener('click', async () => {
   await window.electronAPI.saveSettings({
     notificationsEnabled: document.getElementById('setting-notifications').checked,
     hotkeys: pendingHotkeys,
+    discordRpc: { enabled: document.getElementById('setting-discord-rpc').checked },
+    lastfm: {
+      enabled:   document.getElementById('setting-lastfm-enabled').checked,
+      apiKey:    document.getElementById('setting-lastfm-api-key').value.trim(),
+      apiSecret: document.getElementById('setting-lastfm-api-secret').value.trim(),
+    },
   });
   document.getElementById('settings-overlay').classList.remove('open');
 });
@@ -318,17 +389,40 @@ window.electronAPI.onOpenSettings(async () => {
 
 // ── End settings panel ────────────────────────────────────────────────────────
 
-webview.addEventListener ('dom-ready',() => {
-    webview.insertCSS(`
-    /* For WebKit browsers (Chrome, Safari, Opera) */
-    ::-webkit-scrollbar {
-      display: none;
-    }
-
-    /* For IE, Edge */
+webview.addEventListener('dom-ready', async () => {
+  webview.insertCSS(`
+    /* Hide scrollbars */
+    ::-webkit-scrollbar { display: none; }
     -ms-overflow-style: none;
-
-    /* For Firefox */
     scrollbar-width: none;
   `);
+
+  webview.executeJavaScript(`
+    (function() {
+      function removeWebiModules() {
+        document.querySelectorAll('.sidebarModule__webiEmbeddedModule').forEach(el => {
+          el.closest('.sidebarModule')?.remove();
+        });
+      }
+      removeWebiModules();
+      new MutationObserver(removeWebiModules)
+        .observe(document.body, { childList: true, subtree: true });
+    })();
+  `).catch(console.error);
+
+  const baseCss = await window.electronAPI.getBaseCss();
+  if (baseCss) {
+    const escaped = baseCss.replace(/\\/g, '\\\\').replace(/`/g, '\\`');
+    webview.executeJavaScript(`
+      (function() {
+        let style = document.getElementById('base-theme-style');
+        if (!style) {
+          style = document.createElement('style');
+          style.id = 'base-theme-style';
+          document.head.appendChild(style);
+        }
+        style.textContent = \`${escaped}\`;
+      })();
+    `).catch(console.error);
+  }
 })

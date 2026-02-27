@@ -1,5 +1,4 @@
 console.log('webview-preload.js loaded');
-
 const { ipcRenderer } = require('electron');
 window.addEventListener('contextmenu', (e) => {
   e.preventDefault();

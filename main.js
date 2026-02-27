@@ -1,10 +1,12 @@
-const { app, BrowserWindow, ipcMain, globalShortcut, Menu, MenuItem, dialog, Notification } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, Menu, MenuItem, dialog, Notification, shell } = require('electron');
 if (process.platform === 'win32') {app.setAppUserModelId('CrossSound');}
 const path = require('path');
 const { createSystemTray, updateTrayMenu } = require('./features/systemtray.js');
 const { updateTaskbarButtons, registerMediaKeys, reregisterMediaKeys, unregisterMediaKeys } = require('./features/playback.js');
 const { loadSettings, saveSettings, getSettings } = require('./features/settings.js');
 const notifications = require('./features/notifications.js');
+const discordrpc = require('./otherservices/discordrpc.js');
+const lastfm = require('./otherservices/lastfm.js');
 const fs = require('fs').promises;
 
 const iconPath = process.platform === 'win32' ? 'assets/icon.ico' :
@@ -33,6 +35,10 @@ ipcMain.on('crosssound-playback-state', (event, state) => {
 
   updateTaskbarButtons(mainWindow, state);
   updateTrayMenu(mainWindow, state);
+
+  const s = getSettings();
+  if (s.discordRpc?.enabled) discordrpc.update(state);
+  lastfm.update(state, s);
 
   if (
     !initialized &&
@@ -85,11 +91,35 @@ ipcMain.handle('load-theme-dialog', async () => {
   return filePaths[0];
 });
 
+  ipcMain.handle('lastfm-get-auth-token', async (_event, { apiKey, apiSecret }) => {
+  try {
+    const token = await lastfm.getToken(apiKey, apiSecret);
+    shell.openExternal(`https://www.last.fm/api/auth/?api_key=${apiKey}&token=${token}`);
+    return { success: true, token };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('lastfm-complete-auth', async (_event, { apiKey, apiSecret, token }) => {
+  try {
+    const session = await lastfm.getSession(apiKey, apiSecret, token);
+    saveSettings({ lastfm: { sessionKey: session.key, username: session.name } });
+    return { success: true, username: session.name };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
 ipcMain.handle('get-settings', () => getSettings());
 
 ipcMain.handle('save-settings', (_event, updates) => {
+  const prev = getSettings();
   const s = saveSettings(updates);
   reregisterMediaKeys(mainWindow, s.hotkeys);
+  const rpc = s.discordRpc;
+  if (rpc?.enabled && !prev.discordRpc?.enabled) discordrpc.connect();
+  else if (!rpc?.enabled && prev.discordRpc?.enabled) discordrpc.destroy();
   return s;
 });
 
@@ -108,6 +138,14 @@ ipcMain.handle('read-theme-css', async (event, themePath) => {
   } catch (err) {
     console.error('Failed to read CSS:', err);
     return null;
+  }
+});
+
+ipcMain.handle('read-base-css', async () => {
+  try {
+    return await fs.readFile(path.join(__dirname, 'styles/main/soundcloud.css'), 'utf-8');
+  } catch (err) {
+    return '';
   }
 });
 
@@ -225,7 +263,12 @@ app.whenReady().then(async () => {
   loadSettings();
   loadSavedThemes();
   await createWindow();
-  registerMediaKeys(mainWindow, getSettings().hotkeys);
+  const s = getSettings();
+  registerMediaKeys(mainWindow, s.hotkeys);
+
+  if (s.discordRpc?.enabled) {
+    discordrpc.connect();
+  }
 
   const contextMenu = (await import('electron-context-menu')).default;
   contextMenu({ window: mainWindow });
@@ -237,4 +280,6 @@ app.on('window-all-closed', () => {
 
 app.on('will-quit', () => {
   unregisterMediaKeys();
+  discordrpc.destroy();
+  lastfm.destroy();
 });

@@ -1,0 +1,239 @@
+
+* {
+  border-color: #FFFFFF !important;
+}
+
+html,
+body {
+  background: #ffffff !important;
+  color: #111111 !important;
+  
+}
+
+.header__logoLink svg {
+  color: black !important;
+  background-color: #FFFFFF !important;
+}
+
+.header__logo left m-loggedIn {
+  background-color: white;
+}
+
+#app {
+  background-color: #ffffff !important;
+  color: #111111 !important;
+}
+
+#app > .l-container,
+#app > header,
+#app > .playControls > section,
+#app > .playControls > section > .playControls__wrapper > .playControls__bg {
+  background: #FFFFFF !important;
+}
+
+.banner {
+  background-color: white !important;
+  color: black !important;
+}
+
+.targetedProUpsellBanner__link, a, a:hover {
+  color: #111111 !important;
+}
+
+.targetedProUpsellBanner__link {
+  color: black !important;
+}
+.ouxtlr0 {
+    background-color: #ff0000;
+}
+
+#app > header {
+  border-bottom: solid 1px #ddd !important;
+}
+
+#app > .playControls > section,
+#app > .playControls > section > .playControls__wrapper > .playControls__bg {
+  border-top-color: #ddd !important;
+}
+
+.header__logo {
+  background: #FFFFFF !important;
+}
+
+.headerSearch__input {
+  background: #ffffff !important;
+  color: #111111 !important;
+  border: solid #ccc 1px !important;
+}
+
+.playControls__elements .playbackTimeline * {
+  color: #111111 !important;
+}
+
+.sc-link-dark {
+  color: #111111 !important;
+}
+
+.sc-truncate {
+  color: #555 !important;
+}
+
+.tileGallery__sliderButton {
+  background: #ffffff !important;
+  border-color: #ccc !important;
+}
+
+.tileGallery__sliderButton::after {
+  border-color: #111111 !important;
+}
+
+.g-tabs-link {
+  color: #111111 !important;
+}
+
+.g-tabs-link.active {
+  color: #f50 !important;
+}
+
+.sc-input {
+  border-color: #ccc !important;
+  background-color: #ffffff !important;
+  color: #111111 !important;
+}
+
+.sc-button {
+  border-color: #ccc !important;
+  background-color: #ffffff !important;
+  color: #111111 !important;
+}
+
+.playbackSoundBadge__titleLink {
+  color: #333 !important;
+}
+
+.playbackSoundBadge__titleLink:hover {
+  color: #000 !important;
+}
+
+.playControls__queue .queue,
+.playControls__queue .queue__scrollableInner,
+.playControls__queue .queue__itemWrapper,
+.playControls__queue .queueItemView {
+  background: #ffffff !important;
+}
+
+.commentForm__wrapper {
+  border: none !important;
+  background: #FFFFFF !important;
+}
+
+.commentForm__wrapper .commentForm__inputWrapper input {
+  border-color: #ccc;
+  background: #ffffff;
+  color: #111111 !important;
+}
+
+.sound__soundActions {
+  background: #f5f5f5 !important;
+}
+
+.sc-tagContent {
+  color: #111111 !important;
+}
+
+.sc-classic .trackItem.active,
+.sc-classic .trackItem.hover {
+  background: #eeeeee !important;
+}
+
+.sc-classic .trackItem.active .trackItem__additional,
+.sc-classic .trackItem.hover .trackItem__additional {
+  background: #eeeeee !important;
+}
+
+.compactTrackList__list li div {
+  background: #ffffff !important;
+}
+
+.compactTrackList__list li div span {
+  color: #555 !important;
+}
+
+.compactTrackList__list li .active {
+  background: #ffffff !important;
+}
+
+.compactTrackList__list li .active span {
+  color: #111111 !important;
+}
+
+.compactTrackList__list li div:hover {
+  background: #f0f0f0 !important;
+}
+
+.compactTrackList__list li div:hover span {
+  color: #111111 !important;
+}
+
+.dropbar__content {
+  background: #ffffff !important;
+}
+
+.dropbar__content .userDropbar__title {
+  color: #111111 !important;
+}
+
+.visualSound__wrapper {
+  background: #f5f5f5 !important;
+}
+
+.g-modal-section {
+  background-color: #ffffff !important;
+}
+
+.tabs__tabs {
+  background-color: #f5f5f5 !important;
+}
+
+.commentForm__input {
+  background-color: #ffffff !important;
+}
+
+.commentItem__usernameLink,
+.commentItem__body,
+.commentItem__controls,
+.commentItem__replyButton {
+  color: #111111 !important;
+}
+
+.header__appclosebtn:hover,
+.header__appmaximizebtn:hover,
+.header__appminimizebtn:hover {
+  background-color: #eeeeee !important;
+}
+
+.header__appnextbtn,
+.header__apppreviousbtn {
+  background-color: #f5f5f5 !important;
+}
+
+.header .creatorSubscriptionsButton.header__button {
+  background-color: #FFFFFF;
+  border-color: #FFFFFF;
+  color: black;
+  border-width: 0px;
+}
+
+.header a.selected, .header a:focus, .header a:hover {
+  color:black;
+}
+
+.header a {
+  color: black !important;
+}
+
+a:hover {
+  color: #575757 !important;
+}
+
+.sidebarModule__webiEmbeddedModule { display: none !important; }
