@@ -151,6 +151,14 @@ ipcMain.on('show-native-context-menu', async (event, { x, y }) => {
     }
   }));
 
+  menu.append(new MenuItem({
+    label: 'Default Theme',
+    click: () => {
+      win.webContents.send('clear-theme');
+      saveLastTheme(null);
+    }
+  }));
+
   menu.append(new MenuItem({ type: 'separator' }));
 
   menu.append(new MenuItem({

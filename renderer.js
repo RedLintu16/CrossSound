@@ -60,27 +60,44 @@ function injectCss(css) {
   webview.executeJavaScript(script).catch(console.error);
 }
 
-// Setup MutationObserver to keep CSS applied if SoundCloud modifies DOM
+// Setup MutationObserver to keep CSS applied if SoundCloud modifies DOM.
+// Stores the observer at window.__csObserver so it can be disconnected later.
 function setupMutationObserver() {
+  if (!themeCss) return; // nothing to keep in place
+  const escaped = themeCss.replace(/\\/g, '\\\\').replace(/`/g, '\\`');
   const script = `
     (function() {
+      if (window.__csObserver) { window.__csObserver.disconnect(); window.__csObserver = null; }
       const styleId = 'custom-theme-style';
+      const css = \`${escaped}\`;
       const observer = new MutationObserver(() => {
         let style = document.getElementById(styleId);
         if (!style) {
           style = document.createElement('style');
           style.id = styleId;
-          style.textContent = \`${themeCss.replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\`;
+          style.textContent = css;
           document.head.appendChild(style);
-        } else if (style.textContent !== \`${themeCss.replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\`) {
-          style.textContent = \`${themeCss.replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\`;
+        } else if (style.textContent !== css) {
+          style.textContent = css;
         }
       });
       observer.observe(document.body, { childList: true, subtree: true });
+      window.__csObserver = observer;
     })();
   `;
-
   webview.executeJavaScript(script).catch(console.error);
+}
+
+// Remove the custom theme and disconnect the observer
+function clearTheme() {
+  themeCss = '';
+  webview.executeJavaScript(`
+    (function() {
+      if (window.__csObserver) { window.__csObserver.disconnect(); window.__csObserver = null; }
+      const style = document.getElementById('custom-theme-style');
+      if (style) style.remove();
+    })();
+  `).catch(console.error);
 }
 
 // Handle "Load Theme" from context menu — opens file picker, applies + saves the theme
@@ -95,6 +112,8 @@ window.electronAPI.onOpenLoadThemeDialog(async () => {
   showThemeNotification(themeName);
   window.electronAPI.saveTheme(themeName, theme.path);
 });
+
+window.electronAPI.onClearTheme(() => clearTheme());
 
 // Apply theme and setup observer
 window.electronAPI.onApplyTheme(({ cssContent, path }) => {
