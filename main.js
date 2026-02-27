@@ -27,6 +27,7 @@ let mainWindow;
 let tray;
 let lastNotificationState = {};
 let initialized = false;
+let notificationTimer = null;
 
 const lastThemeFilePath = path.join(app.getPath('userData'), 'last-theme.json');
 
@@ -61,17 +62,27 @@ ipcMain.on('crosssound-playback-state', (event, state) => {
   const playChanged = state.isPlaying !== lastNotificationState.isPlaying;
   const likeChanged = state.isLiked !== lastNotificationState.isLiked;
 
-  // Track change takes priority — don't also fire a play/pause notification
-  if (titleChanged) {
-    notifications.showNowPlaying(state.title, state.artist);
-  } else if (playChanged) {
-    if (state.isPlaying) notifications.showNowPlaying(state.title, state.artist);
-    else notifications.showPaused(state.title, state.artist);
-  }
+  if (titleChanged || playChanged || likeChanged) {
+    clearTimeout(notificationTimer);
+    const pendingState = { ...state };
+    const pendingPrev = { ...lastNotificationState };
+    notificationTimer = setTimeout(() => {
+      const tc = pendingState.title && pendingState.title !== pendingPrev.title;
+      const pc = pendingState.isPlaying !== pendingPrev.isPlaying;
+      const lc = pendingState.isLiked !== pendingPrev.isLiked;
 
-  if (likeChanged) {
-    if (state.isLiked) notifications.showLiked(state.title, state.artist);
-    else notifications.showUnliked(state.title, state.artist);
+      if (tc) {
+        notifications.showNowPlaying(pendingState.title, pendingState.artist);
+      }
+      if (!tc && pc) {
+        if (pendingState.isPlaying) notifications.showNowPlaying(pendingState.title, pendingState.artist);
+        else notifications.showPaused(pendingState.title, pendingState.artist);
+      }
+      if (!tc && lc) {
+        if (pendingState.isLiked) notifications.showLiked(pendingState.title, pendingState.artist);
+        else notifications.showUnliked(pendingState.title, pendingState.artist);
+      }
+    }, 1500);
   }
 
   lastNotificationState = { ...state };
