@@ -1,0 +1,150 @@
+    html, body, #soundcloud {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      border: none;
+      overflow: hidden;
+    }
+
+    /* Settings overlay */
+    #settings-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+    }
+    #settings-overlay.open {
+      display: flex;
+    }
+    #settings-panel {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 28px 32px;
+      width: 420px;
+      color: #fff;
+      font-family: sans-serif;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    }
+    #settings-panel h2 {
+      margin: 0 0 22px;
+      font-size: 17px;
+      font-weight: 600;
+    }
+    .settings-section {
+      margin-bottom: 22px;
+    }
+    .settings-section h3 {
+      margin: 0 0 10px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #888;
+    }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #ccc;
+    }
+    .toggle-row input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #ff5500;
+    }
+    .hotkey-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .hotkey-row span {
+      font-size: 14px;
+      color: #ccc;
+      flex: 1;
+    }
+    .hotkey-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .hotkey-input-wrap input[type="text"] {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 13px;
+      padding: 5px 10px;
+      width: 160px;
+      outline: none;
+      cursor: pointer;
+      text-align: center;
+    }
+    .hotkey-input-wrap input[type="text"].recording {
+      border-color: #ff5500;
+      color: #ff8844;
+    }
+    .hotkey-clear {
+      background: none;
+      border: none;
+      color: #555;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 2px 5px;
+    }
+    .hotkey-clear:hover {
+      color: #fff;
+    }
+    .settings-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 24px;
+    }
+    .settings-actions button {
+      border: none;
+      border-radius: 5px;
+      padding: 8px 22px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    #settings-cancel {
+      background: #333;
+      color: #bbb;
+    }
+    #settings-cancel:hover {
+      background: #444;
+    }
+    #settings-save {
+      background: #ff5500;
+      color: #fff;
+    }
+    #settings-save:hover {
+      background: #ff6a1a;
+    }
+#theme-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #4caf50;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  font-family: sans-serif;
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  z-index: 9999;
+}
