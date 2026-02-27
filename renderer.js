@@ -83,6 +83,19 @@ function setupMutationObserver() {
   webview.executeJavaScript(script).catch(console.error);
 }
 
+// Handle "Load Theme" from context menu — opens file picker, applies + saves the theme
+window.electronAPI.onOpenLoadThemeDialog(async () => {
+  const themePath = await window.electronAPI.loadTheme();
+  if (!themePath) return;
+  const theme = await window.electronAPI.applyTheme(themePath);
+  if (!theme) return;
+  injectCss(theme.cssContent);
+  setupMutationObserver();
+  const themeName = theme.path.split(/[\\/]/).pop();
+  showThemeNotification(themeName);
+  window.electronAPI.saveTheme(themeName, theme.path);
+});
+
 // Apply theme and setup observer
 window.electronAPI.onApplyTheme(({ cssContent, path }) => {
   injectCss(cssContent);
@@ -164,6 +177,127 @@ window.addEventListener('contextmenu', e => {
   e.preventDefault();
   window.electronAPI.showContextMenu(e.clientX, e.clientY);
 });
+
+// ── Settings panel ────────────────────────────────────────────────────────────
+
+let pendingHotkeys = {};
+
+function keyEventToAccelerator(e) {
+  const mods = [];
+  if (e.ctrlKey)  mods.push('Ctrl');
+  if (e.shiftKey) mods.push('Shift');
+  if (e.altKey)   mods.push('Alt');
+  if (e.metaKey)  mods.push('Meta');
+
+  const key = e.key;
+  if (['Control', 'Shift', 'Alt', 'Meta'].includes(key)) return null;
+
+  // Browser media key names → Electron accelerator names
+  const mediaMap = {
+    MediaPlayPause:       'MediaPlayPause',
+    MediaTrackNext:       'MediaNextTrack',
+    MediaTrackPrevious:   'MediaPreviousTrack',
+    MediaStop:            'MediaStop',
+  };
+  if (mediaMap[key]) return mediaMap[key]; // media keys: no modifiers
+
+  let name = key;
+  if (/^[a-zA-Z]$/.test(key))   name = key.toUpperCase();
+  else if (key === ' ')           name = 'Space';
+  else if (key === 'ArrowUp')    name = 'Up';
+  else if (key === 'ArrowDown')  name = 'Down';
+  else if (key === 'ArrowLeft')  name = 'Left';
+  else if (key === 'ArrowRight') name = 'Right';
+  else if (key === 'Enter')      name = 'Return';
+
+  if (!name) return null;
+  return [...mods, name].join('+');
+}
+
+function setupHotkeyInput(input) {
+  input.addEventListener('focus', () => {
+    input.dataset.prevValue = input.value;
+    input.value = '';
+    input.placeholder = 'Press a key…';
+    input.classList.add('recording');
+  });
+
+  input.addEventListener('blur', () => {
+    input.classList.remove('recording');
+    input.placeholder = 'Click to set…';
+    if (!input.value) {
+      input.value = input.dataset.prevValue || '';
+    }
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (!input.classList.contains('recording')) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const accel = keyEventToAccelerator(e);
+    if (!accel) return;
+
+    input.value = accel;
+    const action = input.id.replace('hotkey-', '');
+    pendingHotkeys[action] = accel;
+    input.blur();
+  });
+}
+
+function openSettingsPanel(settings) {
+  pendingHotkeys = { ...settings.hotkeys };
+
+  document.getElementById('setting-notifications').checked = settings.notificationsEnabled;
+
+  for (const [action, key] of Object.entries(settings.hotkeys)) {
+    const input = document.getElementById(`hotkey-${action}`);
+    if (input) input.value = key || '';
+  }
+
+  document.getElementById('settings-overlay').classList.add('open');
+  document.getElementById('settings-panel').focus();
+}
+
+// Wire up hotkey inputs
+document.querySelectorAll('#settings-panel input[type="text"]').forEach(setupHotkeyInput);
+
+// Clear buttons
+document.querySelectorAll('.hotkey-clear').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const input = document.getElementById(btn.dataset.target);
+    if (!input) return;
+    input.value = '';
+    const action = input.id.replace('hotkey-', '');
+    pendingHotkeys[action] = '';
+  });
+});
+
+document.getElementById('settings-cancel').addEventListener('click', () => {
+  document.getElementById('settings-overlay').classList.remove('open');
+});
+
+document.getElementById('settings-save').addEventListener('click', async () => {
+  await window.electronAPI.saveSettings({
+    notificationsEnabled: document.getElementById('setting-notifications').checked,
+    hotkeys: pendingHotkeys,
+  });
+  document.getElementById('settings-overlay').classList.remove('open');
+});
+
+// Close on click outside the panel
+document.getElementById('settings-overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('settings-overlay')) {
+    document.getElementById('settings-overlay').classList.remove('open');
+  }
+});
+
+window.electronAPI.onOpenSettings(async () => {
+  const settings = await window.electronAPI.getSettings();
+  openSettingsPanel(settings);
+});
+
+// ── End settings panel ────────────────────────────────────────────────────────
 
 webview.addEventListener ('dom-ready',() => {
     webview.insertCSS(`

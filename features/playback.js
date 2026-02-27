@@ -1,11 +1,8 @@
-const { nativeImage } = require('electron');
+const { nativeImage, globalShortcut } = require('electron');
 const path = require('path');
 
-const { globalShortcut } = require('electron');
-
-// Button callbacks
 function updateTaskbarButtons(mainWindow, state = {}) {
-  if (process.platform !== 'win32') return; // Only on Windows
+  if (process.platform !== 'win32') return;
 
   const playIcon = nativeImage.createFromPath(path.join(__dirname, '..', 'icons', state.isPlaying ? 'pause.png' : 'play.png'));
   const nextIcon = nativeImage.createFromPath(path.join(__dirname, '..', 'icons', 'next.png'));
@@ -36,24 +33,32 @@ function updateTaskbarButtons(mainWindow, state = {}) {
   ]);
 }
 
-function registerMediaKeys(mainWindow) {
-  globalShortcut.register('MediaPlayPause', () => {
-    if (mainWindow) {
-      mainWindow.webContents.send('crosssound-media-action', { action: 'playpause' });
-    }
-  });
+function tryRegister(key, handler) {
+  if (!key) return;
+  try {
+    globalShortcut.register(key, handler);
+  } catch (e) {
+    console.error(`Failed to register hotkey "${key}":`, e);
+  }
+}
 
-  globalShortcut.register('MediaNextTrack', () => {
-    if (mainWindow) {
-      mainWindow.webContents.send('crosssound-media-action', { action: 'next' });
-    }
-  });
+function registerMediaKeys(mainWindow, hotkeys = {}) {
+  const k = {
+    playpause: hotkeys.playpause || 'MediaPlayPause',
+    next:      hotkeys.next      || 'MediaNextTrack',
+    previous:  hotkeys.previous  || 'MediaPreviousTrack',
+    like:      hotkeys.like      || 'F23',
+  };
+  const send = (action) => () => mainWindow?.webContents.send('crosssound-media-action', { action });
+  tryRegister(k.playpause, send('playpause'));
+  tryRegister(k.next,      send('next'));
+  tryRegister(k.previous,  send('previous'));
+  tryRegister(k.like,      send('like'));
+}
 
-  globalShortcut.register('MediaPreviousTrack', () => {
-    if (mainWindow) {
-      mainWindow.webContents.send('crosssound-media-action', { action: 'previous' });
-    }
-  });
+function reregisterMediaKeys(mainWindow, hotkeys) {
+  globalShortcut.unregisterAll();
+  registerMediaKeys(mainWindow, hotkeys);
 }
 
 function unregisterMediaKeys() {
@@ -63,5 +68,6 @@ function unregisterMediaKeys() {
 module.exports = {
   updateTaskbarButtons,
   registerMediaKeys,
+  reregisterMediaKeys,
   unregisterMediaKeys,
 };

@@ -12,9 +12,136 @@
       border: none;
       overflow: hidden;
     }
+
+    /* Settings overlay */
+    #settings-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+    }
+    #settings-overlay.open {
+      display: flex;
+    }
+    #settings-panel {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 28px 32px;
+      width: 420px;
+      color: #fff;
+      font-family: sans-serif;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    }
+    #settings-panel h2 {
+      margin: 0 0 22px;
+      font-size: 17px;
+      font-weight: 600;
+    }
+    .settings-section {
+      margin-bottom: 22px;
+    }
+    .settings-section h3 {
+      margin: 0 0 10px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #888;
+    }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #ccc;
+    }
+    .toggle-row input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #ff5500;
+    }
+    .hotkey-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .hotkey-row span {
+      font-size: 14px;
+      color: #ccc;
+      flex: 1;
+    }
+    .hotkey-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .hotkey-input-wrap input[type="text"] {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 13px;
+      padding: 5px 10px;
+      width: 160px;
+      outline: none;
+      cursor: pointer;
+      text-align: center;
+    }
+    .hotkey-input-wrap input[type="text"].recording {
+      border-color: #ff5500;
+      color: #ff8844;
+    }
+    .hotkey-clear {
+      background: none;
+      border: none;
+      color: #555;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 2px 5px;
+    }
+    .hotkey-clear:hover {
+      color: #fff;
+    }
+    .settings-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 24px;
+    }
+    .settings-actions button {
+      border: none;
+      border-radius: 5px;
+      padding: 8px 22px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    #settings-cancel {
+      background: #333;
+      color: #bbb;
+    }
+    #settings-cancel:hover {
+      background: #444;
+    }
+    #settings-save {
+      background: #ff5500;
+      color: #fff;
+    }
+    #settings-save:hover {
+      background: #ff6a1a;
+    }
   </style>
 </head>
 <body>
+
 <div id="theme-notification" style="
   position: fixed;
   top: 20px;
@@ -32,9 +159,58 @@
   z-index: 9999;
 ">Theme Loaded!</div>
 
+<div id="settings-overlay">
+  <div id="settings-panel">
+    <h2>Settings</h2>
+
+    <div class="settings-section">
+      <h3>Notifications</h3>
+      <label class="toggle-row">
+        <input type="checkbox" id="setting-notifications">
+        <span>Enable notifications</span>
+      </label>
+    </div>
+
+    <div class="settings-section">
+      <h3>Hotkeys</h3>
+      <div class="hotkey-row">
+        <span>Play / Pause</span>
+        <div class="hotkey-input-wrap">
+          <input type="text" id="hotkey-playpause" readonly placeholder="Click to set…">
+          <button class="hotkey-clear" data-target="hotkey-playpause">×</button>
+        </div>
+      </div>
+      <div class="hotkey-row">
+        <span>Next Track</span>
+        <div class="hotkey-input-wrap">
+          <input type="text" id="hotkey-next" readonly placeholder="Click to set…">
+          <button class="hotkey-clear" data-target="hotkey-next">×</button>
+        </div>
+      </div>
+      <div class="hotkey-row">
+        <span>Previous Track</span>
+        <div class="hotkey-input-wrap">
+          <input type="text" id="hotkey-previous" readonly placeholder="Click to set…">
+          <button class="hotkey-clear" data-target="hotkey-previous">×</button>
+        </div>
+      </div>
+      <div class="hotkey-row">
+        <span>Like / Unlike</span>
+        <div class="hotkey-input-wrap">
+          <input type="text" id="hotkey-like" readonly placeholder="Click to set…">
+          <button class="hotkey-clear" data-target="hotkey-like">×</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-actions">
+      <button id="settings-cancel">Cancel</button>
+      <button id="settings-save">Save</button>
+    </div>
+  </div>
+</div>
 
   <webview preload="webview-preload.js" id="soundcloud" src="https://soundcloud.com" style="width:100vw; height:100vh;" webpreferences="devTools=yes" allowpopups=""></webview>
   <script src="renderer.js"></script>
-  </div>
 </body>
 </html>

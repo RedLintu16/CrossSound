@@ -10,6 +10,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showContextMenu: (x, y) => ipcRenderer.send('show-native-context-menu', { x, y }),
    applyTheme: (themePath) => ipcRenderer.invoke('read-theme-css', themePath),
   onApplyTheme: (callback) => ipcRenderer.on('apply-theme', (event, themePath) => callback(themePath)),
+  saveTheme: (name, path) => ipcRenderer.invoke('save-theme', { name, path }),
+  getSettings: () => ipcRenderer.invoke('get-settings'),
+  saveSettings: (s) => ipcRenderer.invoke('save-settings', s),
+  onOpenSettings: (cb) => ipcRenderer.on('open-settings', () => cb()),
   on: (channel, callback) => ipcRenderer.on(channel, (event, data) => callback(data)),
 });
 

@@ -18,7 +18,8 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.8.1",
     "@electron-forge/plugin-fuses": "^7.8.1",
     "@electron/fuses": "^1.8.0",
-    "electron": "^30.5.1"
+    "electron": "^30.5.1",
+    "terser": "^5.0.0"
   },
   "dependencies": {
     "electron-context-menu": "^4.1.0",
