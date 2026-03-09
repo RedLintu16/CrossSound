@@ -425,6 +425,63 @@ window.electronAPI.onOpenSettings(async () => {
 
 // ── End settings panel ────────────────────────────────────────────────────────
 
+// ── Navigation / load diagnostics ─────────────────────────────────────────────
+webview.addEventListener('will-navigate', (e) => {
+  console.log('[nav] will-navigate:', e.url);
+});
+
+webview.addEventListener('did-navigate', (e) => {
+  console.log('[nav] did-navigate:', e.url, '| httpResponseCode:', e.httpResponseCode);
+});
+
+webview.addEventListener('did-navigate-in-page', (e) => {
+  if (!e.isMainFrame) return;
+  console.log('[nav] did-navigate-in-page:', e.url);
+
+  // After SPA navigation, check if SoundCloud actually rendered content
+  setTimeout(() => {
+    webview.executeJavaScript(`
+      (function() {
+        const app = document.getElementById('app');
+        const main = document.querySelector('.l-container, .sc-container, main, [role="main"]');
+        const children = main ? main.children.length : 'no main';
+        const appVis = app ? window.getComputedStyle(app).visibility : 'no #app';
+        const appDisp = app ? window.getComputedStyle(app).display : 'no #app';
+        const appH = app ? app.offsetHeight : 0;
+        return { children, appVis, appDisp, appH, url: location.href };
+      })()
+    `).then(info => {
+      console.log('[dom] after in-page nav:', JSON.stringify(info));
+      if (info.appH === 0 || info.appVis === 'hidden' || info.appDisp === 'none') {
+        console.warn('[dom] BLANK PAGE DETECTED — #app is not visible');
+      }
+    }).catch(console.error);
+  }, 800);
+});
+
+webview.addEventListener('did-start-loading', () => {
+  console.log('[nav] did-start-loading');
+});
+
+webview.addEventListener('did-stop-loading', () => {
+  console.log('[nav] did-stop-loading, URL:', webview.getURL());
+});
+
+webview.addEventListener('did-finish-load', () => {
+  console.log('[nav] did-finish-load, URL:', webview.getURL());
+});
+
+webview.addEventListener('did-fail-load', (e) => {
+  console.warn('[nav] did-fail-load:', e.errorCode, e.errorDescription, '| URL:', e.validatedURL, '| isMainFrame:', e.isMainFrame);
+});
+
+webview.addEventListener('new-window', (e) => {
+  console.log('[nav] new-window blocked — url:', e.url, '| frameName:', e.frameName, '| disposition:', e.disposition);
+  // Load in-place so clicks on tracks/playlists don't silently vanish
+  webview.loadURL(e.url);
+});
+// ── End navigation diagnostics ────────────────────────────────────────────────
+
 webview.addEventListener('dom-ready', async () => {
   webview.insertCSS(`
     /* Hide scrollbars */
@@ -437,7 +494,8 @@ webview.addEventListener('dom-ready', async () => {
     (function() {
       function removeWebiModules() {
         document.querySelectorAll('.sidebarModule__webiEmbeddedModule').forEach(el => {
-          el.closest('.sidebarModule')?.remove();
+          const mod = el.closest('.sidebarModule');
+          if (mod) mod.style.display = 'none'; // hide only — don't remove, or React crashes on unmount
         });
       }
       removeWebiModules();

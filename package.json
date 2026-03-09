@@ -6,7 +6,9 @@
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "electron-forge make",
+    "build:asar": "electron-forge package",
+    "build:arch": "electron-forge make --targets maker-arch"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.8.1",
