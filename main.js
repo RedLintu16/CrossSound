@@ -28,6 +28,7 @@ let tray;
 let lastNotificationState = {};
 let initialized = false;
 let notificationTimer = null;
+let notificationBaseline = null;
 
 const lastThemeFilePath = path.join(app.getPath('userData'), 'last-theme.json');
 
@@ -63,24 +64,30 @@ ipcMain.on('crosssound-playback-state', (event, state) => {
   const likeChanged = state.isLiked !== lastNotificationState.isLiked;
 
   if (titleChanged || playChanged || likeChanged) {
+    // Only snapshot the baseline at the START of a new debounce window.
+    // If the timer is already running (e.g. isPlaying briefly flickered),
+    // we keep the original baseline so transient flips don't trigger a notification.
+    if (!notificationTimer) {
+      notificationBaseline = { ...lastNotificationState };
+    }
     clearTimeout(notificationTimer);
-    const pendingState = { ...state };
-    const pendingPrev = { ...lastNotificationState };
+    const snap = { ...state };
     notificationTimer = setTimeout(() => {
-      const tc = pendingState.title && pendingState.title !== pendingPrev.title;
-      const pc = pendingState.isPlaying !== pendingPrev.isPlaying;
-      const lc = pendingState.isLiked !== pendingPrev.isLiked;
+      notificationTimer = null;
+      const tc = snap.title && snap.title !== notificationBaseline.title;
+      const pc = snap.isPlaying !== notificationBaseline.isPlaying;
+      const lc = snap.isLiked !== notificationBaseline.isLiked;
 
       if (tc) {
-        notifications.showNowPlaying(pendingState.title, pendingState.artist);
+        notifications.showNowPlaying(snap.title, snap.artist);
       }
       if (!tc && pc) {
-        if (pendingState.isPlaying) notifications.showNowPlaying(pendingState.title, pendingState.artist);
-        else notifications.showPaused(pendingState.title, pendingState.artist);
+        if (snap.isPlaying) notifications.showNowPlaying(snap.title, snap.artist);
+        else notifications.showPaused(snap.title, snap.artist);
       }
       if (!tc && lc) {
-        if (pendingState.isLiked) notifications.showLiked(pendingState.title, pendingState.artist);
-        else notifications.showUnliked(pendingState.title, pendingState.artist);
+        if (snap.isLiked) notifications.showLiked(snap.title, snap.artist);
+        else notifications.showUnliked(snap.title, snap.artist);
       }
     }, 1500);
   }
@@ -237,6 +244,12 @@ async function createWindow() {
     width: 1280,
     height: 800,
     autoHideMenuBar: true,
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: '#00000000',
+      symbolColor: '#cccccc',
+      height: 36,
+    },
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,

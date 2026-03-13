@@ -92,7 +92,11 @@
   </div>
 </div>
 
-  <webview preload="webview-preload.js" id="soundcloud" src="https://soundcloud.com" style="width:100vw; height:100vh;" webpreferences="devTools=yes" allowpopups=""></webview>
+  <div id="nav-bar">
+    <button id="nav-back" title="Back">&#8592;</button>
+    <button id="nav-forward" title="Forward">&#8594;</button>
+  </div>
+  <webview preload="webview-preload.js" id="soundcloud" src="https://soundcloud.com" webpreferences="devTools=yes" allowpopups=""></webview>
   <script src="renderer.js"></script>
 </body>
 </html>

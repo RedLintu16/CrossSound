@@ -1,6 +1,23 @@
 console.log('renderer.js loaded');
 const webview = document.getElementById('soundcloud');
 
+// ── Navigation buttons ────────────────────────────────────────────────────────
+const navBack    = document.getElementById('nav-back');
+const navForward = document.getElementById('nav-forward');
+
+function updateNavButtons() {
+  navBack.disabled    = !webview.canGoBack();
+  navForward.disabled = !webview.canGoForward();
+}
+
+navBack.addEventListener('click',    () => { webview.goBack();    updateNavButtons(); });
+navForward.addEventListener('click', () => { webview.goForward(); updateNavButtons(); });
+
+webview.addEventListener('did-navigate',         updateNavButtons);
+webview.addEventListener('did-navigate-in-page', updateNavButtons);
+webview.addEventListener('dom-ready',            updateNavButtons);
+// ─────────────────────────────────────────────────────────────────────────────
+
 let themeCss = '';
 let lastPlayState = null;
 let lastLikeState = null;

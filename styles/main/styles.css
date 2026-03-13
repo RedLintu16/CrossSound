@@ -1,8 +1,55 @@
-    html, body, #soundcloud {
+    html, body {
       margin: 0;
       padding: 0;
       width: 100vw;
       height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #nav-bar {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 0 8px;
+      height: 36px;
+      min-height: 36px;
+      background: #ffffff00;
+      -webkit-app-region: drag;
+    }
+
+    #nav-bar button {
+      -webkit-app-region: no-drag;
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 16px;
+      line-height: 1;
+      width: 28px;
+      height: 26px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #nav-bar button:hover:not(:disabled) {
+      background: #333;
+      color: #fff;
+    }
+
+    #nav-bar button:disabled {
+      color: #444;
+      cursor: default;
+    }
+
+    #soundcloud {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      flex: 1;
       border: none;
       overflow: hidden;
     }

@@ -6,6 +6,7 @@ const CLIENT_ID = '1476801244424048793';
 let rpc = null;
 let connected = false;
 let reconnectTimer = null;
+let healthCheckInterval = null;
 let lastActivity = null;
 
 // ── Time helpers ──────────────────────────────────────────────────────────────
@@ -76,6 +77,7 @@ async function connect() {
     rpc.on('ready', () => {
       connected = true;
       console.log('[DiscordRPC] Connected');
+      startHealthCheck();
       if (lastActivity) rpc.setActivity(lastActivity).catch(() => {});
     });
 
@@ -95,6 +97,18 @@ async function connect() {
 function scheduleReconnect() {
   clearTimeout(reconnectTimer);
   reconnectTimer = setTimeout(connect, 15000);
+}
+
+function startHealthCheck() {
+  if (healthCheckInterval) return;
+  healthCheckInterval = setInterval(() => {
+    if (!connected) connect();
+  }, 30000);
+}
+
+function stopHealthCheck() {
+  clearInterval(healthCheckInterval);
+  healthCheckInterval = null;
 }
 
 function setActivity(state) {
@@ -135,6 +149,7 @@ function update(state) {
 
 function destroy() {
   clearTimeout(reconnectTimer);
+  stopHealthCheck();
   if (rpc) {
     try { rpc.destroy(); } catch (_) {}
     rpc = null;
