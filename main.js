@@ -1,3 +1,5 @@
+if (require('electron-squirrel-startup')) app.quit();
+
 const { app, BrowserWindow, ipcMain, globalShortcut, Menu, MenuItem, dialog, Notification, shell } = require('electron');
 if (process.platform === 'win32') {app.setAppUserModelId('CrossSound');}
 const path = require('path');
@@ -141,6 +143,22 @@ ipcMain.handle('save-settings', (_event, updates) => {
   return s;
 });
 
+ipcMain.handle('get-themes', () => [...loadedThemes]);
+
+ipcMain.handle('delete-theme', (_event, themePath) => {
+  const idx = loadedThemes.findIndex(t => t.path === themePath);
+  if (idx !== -1) {
+    loadedThemes.splice(idx, 1);
+    saveThemes();
+    const last = loadLastTheme();
+    if (last === themePath) saveLastTheme(null);
+    if (loadedThemes.length === 0 && mainWindow) {
+      mainWindow.webContents.send('clear-theme');
+      saveLastTheme(null);
+    }
+  }
+});
+
 ipcMain.handle('save-theme', (event, { name, path }) => {
   if (!loadedThemes.find(t => t.path === path)) {
     loadedThemes.push({ name, path });
@@ -176,43 +194,9 @@ ipcMain.on('show-native-context-menu', async (event, { x, y }) => {
   menu.append(new MenuItem({ label: 'Settings', click: () => win.webContents.send('open-settings') }));
   menu.append(new MenuItem({ type: 'separator' }));
 
-  // Build the themes submenu from loadedThemes
-  if (loadedThemes.length > 0) {
-    const themeSubmenu = new Menu();
-    loadedThemes.forEach(theme => {
-      themeSubmenu.append(new MenuItem({
-        label: theme.name,
-        click: async () => {
-          try {
-            const cssContent = await fs.readFile(theme.path, 'utf-8');
-            win.webContents.send('apply-theme', { path: theme.path, cssContent });
-            saveLastTheme(theme.path);
-          } catch (error) {
-            console.error('Failed to read theme CSS:', error);
-          }
-        }
-      }));
-    });
-    menu.append(new MenuItem({
-      label: 'Load Themes…',
-      submenu: themeSubmenu
-    }));
-  }
-
-  // Add a separate Load Theme button that opens the picker dialog
   menu.append(new MenuItem({
-    label: 'Load Theme',
-    click: () => {
-      win.webContents.send('open-load-theme-dialog');
-    }
-  }));
-
-  menu.append(new MenuItem({
-    label: 'Default Theme',
-    click: () => {
-      win.webContents.send('clear-theme');
-      saveLastTheme(null);
-    }
+    label: 'Themes',
+    click: () => win.webContents.send('open-themes'),
   }));
 
   menu.append(new MenuItem({ type: 'separator' }));

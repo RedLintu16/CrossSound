@@ -23,7 +23,7 @@
       -webkit-app-region: no-drag;
       background: none;
       border: none;
-      color: #aaa;
+      color: #ff8844;
       font-size: 16px;
       line-height: 1;
       width: 28px;
@@ -35,13 +35,29 @@
       justify-content: center;
     }
 
+    #nav-bar button svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    #reloadbutton svg path {
+      fill: none;
+      stroke: currentColor;
+    }
+
+    #reloadbutton svg,
+    #settingsbutton svg {
+      width: 22px;
+      height: 22px;
+    }
+
     #nav-bar button:hover:not(:disabled) {
-      background: #333;
-      color: #fff;
+      color: #d54b00;
     }
 
     #nav-bar button:disabled {
-      color: #444;
+      color: #ff5500;
       cursor: default;
     }
 
@@ -225,6 +241,90 @@
 .service-btn.connected {
   border-color: #4caf50;
   color: #4caf50;
+}
+
+#themes-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+}
+#themes-overlay.open {
+  display: flex;
+}
+#themes-panel {
+  background: #FFFFFF;
+  border: 1px solid #FFFFFF;
+  border-radius: 10px;
+  padding: 28px 32px;
+  width: 420px;
+  color: #000000;
+  font-family: sans-serif;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+#themes-panel h2 {
+  margin: 0 0 22px;
+  font-size: 17px;
+  font-weight: 600;
+}
+#themes-panel-list {
+  margin-bottom: 18px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.theme-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #000000;
+}
+.theme-item:hover {
+  background: #f0f0f0;
+}
+.theme-item.active {
+  background: #fff3ee;
+  color: #ff5500;
+  font-weight: 600;
+}
+.theme-item-delete {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+.theme-item-delete:hover {
+  color: #ff5500;
+}
+.themes-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  align-items: center;
+}
+#themes-close-btn {
+  margin-left: auto;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 22px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  background: #FFFFFF;
+  color: #000000;
+}
+#themes-close-btn:hover {
+  background: #444;
+  color: #fff;
 }
 
 #theme-notification {

@@ -5,6 +5,18 @@ const webview = document.getElementById('soundcloud');
 const navBack    = document.getElementById('nav-back');
 const navForward = document.getElementById('nav-forward');
 
+const themesButton = document.getElementById('themesbutton')
+themesButton.addEventListener('click', openThemesPanel);
+
+const settingsButton = document.getElementById('settingsbutton')
+settingsButton.addEventListener('click', async () => {
+  const settings = await window.electronAPI.getSettings();
+  openSettingsPanel(settings);
+});
+
+const reloadButton = document.getElementById('reloadbutton');
+reloadButton.addEventListener('click', () => webview.reload());
+
 function updateNavButtons() {
   navBack.disabled    = !webview.canGoBack();
   navForward.disabled = !webview.canGoForward();
@@ -133,10 +145,92 @@ window.electronAPI.onOpenLoadThemeDialog(async () => {
 
 window.electronAPI.onClearTheme(() => clearTheme());
 
+// ── Themes panel ─────────────────────────────────────────────────────────────
+let activeThemePath = null;
+
+async function openThemesPanel() {
+  const overlay = document.getElementById('themes-overlay');
+  const list = document.getElementById('themes-panel-list');
+  const themes = await window.electronAPI.getThemes();
+
+  list.innerHTML = '';
+  if (themes.length === 0) {
+    list.innerHTML = '<p style="font-size:13px;color:#888;margin:0">No themes loaded yet.</p>';
+  } else {
+    themes.forEach(theme => {
+      const item = document.createElement('div');
+      item.className = 'theme-item' + (theme.path === activeThemePath ? ' active' : '');
+
+      const name = document.createElement('span');
+      name.textContent = theme.name;
+      item.appendChild(name);
+
+      const del = document.createElement('button');
+      del.className = 'theme-item-delete';
+      del.textContent = '×';
+      del.title = 'Remove theme';
+      del.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await window.electronAPI.deleteTheme(theme.path);
+        if (activeThemePath === theme.path) { clearTheme(); activeThemePath = null; }
+        openThemesPanel();
+      });
+      item.appendChild(del);
+
+      item.addEventListener('click', async () => {
+        const loaded = await window.electronAPI.applyTheme(theme.path);
+        if (!loaded) return;
+        injectCss(loaded.cssContent);
+        setupMutationObserver();
+        activeThemePath = theme.path;
+        showThemeNotification(theme.name);
+        openThemesPanel();
+      });
+
+      list.appendChild(item);
+    });
+  }
+
+  overlay.classList.add('open');
+}
+
+window.electronAPI.onOpenThemes(openThemesPanel);
+
+document.getElementById('themes-load-btn').addEventListener('click', async () => {
+  const themePath = await window.electronAPI.loadTheme();
+  if (!themePath) return;
+  const theme = await window.electronAPI.applyTheme(themePath);
+  if (!theme) return;
+  injectCss(theme.cssContent);
+  setupMutationObserver();
+  const themeName = theme.path.split(/[\\/]/).pop();
+  activeThemePath = theme.path;
+  showThemeNotification(themeName);
+  window.electronAPI.saveTheme(themeName, theme.path);
+  openThemesPanel();
+});
+
+document.getElementById('themes-default-btn').addEventListener('click', () => {
+  clearTheme();
+  activeThemePath = null;
+  openThemesPanel();
+});
+
+document.getElementById('themes-close-btn').addEventListener('click', () => {
+  document.getElementById('themes-overlay').classList.remove('open');
+});
+
+document.getElementById('themes-overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('themes-overlay'))
+    document.getElementById('themes-overlay').classList.remove('open');
+});
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Apply theme and setup observer
 window.electronAPI.onApplyTheme(({ cssContent, path }) => {
   injectCss(cssContent);
   setupMutationObserver();
+  activeThemePath = path || null;
   const themeName = path ? path.split(/[\\/]/).pop() : 'Unknown Theme';
   showThemeNotification(themeName);
 });
@@ -513,6 +607,9 @@ webview.addEventListener('dom-ready', async () => {
         document.querySelectorAll('.sidebarModule__webiEmbeddedModule').forEach(el => {
           const mod = el.closest('.sidebarModule');
           if (mod) mod.style.display = 'none'; // hide only — don't remove, or React crashes on unmount
+        });
+        document.querySelectorAll('.creatorSubscriptionsButton').forEach(el => {
+          el.style.display = 'none';
         });
       }
       removeWebiModules();
