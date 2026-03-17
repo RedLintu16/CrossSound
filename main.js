@@ -187,27 +187,7 @@ ipcMain.handle('read-base-css', async () => {
 
 
 // Context menu — build submenu dynamically from loadedThemes
-ipcMain.on('show-native-context-menu', async (event, { x, y }) => {
-  const win = BrowserWindow.fromWebContents(event.sender);
-  const menu = new Menu();
 
-  menu.append(new MenuItem({ label: 'Settings', click: () => win.webContents.send('open-settings') }));
-  menu.append(new MenuItem({ type: 'separator' }));
-
-  menu.append(new MenuItem({
-    label: 'Themes',
-    click: () => win.webContents.send('open-themes'),
-  }));
-
-  menu.append(new MenuItem({ type: 'separator' }));
-
-  menu.append(new MenuItem({
-    label: 'Reload',
-    click: () => event.sender.send('reload-webview'),
-  }));
-
-  menu.popup({ window: win, x, y });
-});
 
 
 notifications.showNowPlaying = (title, artist, artworkImg) => {
