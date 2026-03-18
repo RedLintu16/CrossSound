@@ -1,6 +1,6 @@
-if (require('electron-squirrel-startup')) app.quit();
-
 const { app, BrowserWindow, ipcMain, globalShortcut, Menu, MenuItem, dialog, Notification, shell } = require('electron');
+
+if (require('electron-squirrel-startup')) app.quit();
 if (process.platform === 'win32') {app.setAppUserModelId('CrossSound');}
 const path = require('path');
 const { createSystemTray, updateTrayMenu } = require('./features/systemtray.js');
